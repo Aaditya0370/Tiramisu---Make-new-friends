@@ -1,0 +1,107 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global catch-all default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Validation helper for user profile
+    function isValidUser(data) {
+      return data.id is string
+        && data.id.size() <= 128
+        && data.id == request.auth.uid
+        && data.displayName is string
+        && data.displayName.size() > 0
+        && data.displayName.size() <= 100
+        && (!('bio' in data) || (data.bio is string && data.bio.size() <= 1000))
+        && (!('location' in data) || (data.location is string && data.location.size() <= 120))
+        && (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 500))
+        && (!('initials' in data) || (data.initials is string && data.initials.size() <= 10))
+        && (!('email' in data) || (data.email is string && data.email.size() <= 200))
+        && (!('linkedin' in data) || (data.linkedin is string && data.linkedin.size() <= 200))
+        && (!('instagram' in data) || (data.instagram is string && data.instagram.size() <= 200))
+        && (!('facebook' in data) || (data.facebook is string && data.facebook.size() <= 200))
+        && (!('x' in data) || (data.x is string && data.x.size() <= 200))
+        && (!('createdAt' in data) || data.createdAt is timestamp || data.createdAt is string)
+        && (!('updatedAt' in data) || data.updatedAt is timestamp || data.updatedAt is string);
+    }
+
+    // Validation helper for conversations
+    function isValidConversation(data) {
+      return data.id is string
+        && data.id.size() <= 128
+        && data.participantIds is list
+        && data.participantIds.size() <= 50
+        && data.participantIds.hasAny([request.auth.uid])
+        && (!('title' in data) || (data.title is string && data.title.size() <= 150))
+        && (!('handle' in data) || (data.handle is string && data.handle.size() <= 100))
+        && (!('preview' in data) || (data.preview is string && data.preview.size() <= 500))
+        && (!('createdAt' in data) || data.createdAt is timestamp || data.createdAt is string)
+        && (!('updatedAt' in data) || data.updatedAt is timestamp || data.updatedAt is string);
+    }
+
+    // Validation helper for messages
+    function isValidMessage(data, convId) {
+      return data.id is string
+        && data.id.size() <= 128
+        && data.conversationId is string
+        && data.conversationId == convId
+        && data.senderId is string
+        && data.senderId == request.auth.uid
+        && data.text is string
+        && data.text.size() > 0
+        && data.text.size() <= 2000
+        && (!('senderName' in data) || (data.senderName is string && data.senderName.size() <= 100))
+        && (!('time' in data) || (data.time is string && data.time.size() <= 50))
+        && (!('createdAt' in data) || data.createdAt is timestamp || data.createdAt is string);
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUser(incoming());
+      allow delete: if isOwner(userId) && isValidId(userId);
+    }
+
+    // Conversations
+    match /conversations/{conversationId} {
+      allow read: if isSignedIn() && isValidId(conversationId) && resource.data.participantIds.hasAny([request.auth.uid]);
+      allow create: if isSignedIn() && isValidId(conversationId) && isValidConversation(incoming());
+      allow update: if isSignedIn() && isValidId(conversationId) && existing().participantIds.hasAny([request.auth.uid]) && isValidConversation(incoming());
+      allow delete: if isSignedIn() && isValidId(conversationId) && existing().participantIds.hasAny([request.auth.uid]);
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && isValidId(conversationId) && isValidId(messageId);
+        allow create: if isSignedIn() && isValidId(conversationId) && isValidId(messageId) && isValidMessage(incoming(), conversationId);
+        allow update: if isSignedIn() && isValidId(conversationId) && isValidId(messageId) && existing().senderId == request.auth.uid && isValidMessage(incoming(), conversationId);
+        allow delete: if isSignedIn() && isValidId(conversationId) && isValidId(messageId) && existing().senderId == request.auth.uid;
+      }
+    }
+  }
+}

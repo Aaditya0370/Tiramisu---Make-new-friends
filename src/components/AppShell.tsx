@@ -9,12 +9,12 @@ export function AppShell({ path, children, demoMode = false }: { path: string; c
   const isMessages = path === '/messages'
   return (
     <div className={cn('app-frame', isMessages && 'app-frame-messages')}>
-      <Navigation path={path} userEmail={user?.email} />
+      <Navigation path={path} userEmail={user?.email || undefined} />
       <main className={cn('app-main', isMessages && 'app-main-fullscreen')}>
         {demoMode && !isMessages && (
           <div className="demo-mode-strip">
-            <span><Sparkles size={14} /> Read-only demo mode</span>
-            <small>Explore the experience freely. Supabase account actions stay disabled until you connect your project.</small>
+            <span><Sparkles size={14} /> Guest demo preview</span>
+            <small>Explore the experience freely with real-time features enabled.</small>
           </div>
         )}
         {children}

@@ -1,0 +1,161 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with display name, bio, location, and social links",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 200
+        },
+        "location": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "bio": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "avatarUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "initials": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "linkedin": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "instagram": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "facebook": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "x": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "displayName"
+      ]
+    },
+    "Conversation": {
+      "title": "Conversation Thread",
+      "description": "Conversation between users or group chat",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "participantIds": {
+          "type": "array"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "handle": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "preview": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "participantIds"
+      ]
+    },
+    "Message": {
+      "title": "Chat Message",
+      "description": "Individual message inside a conversation",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "conversationId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "senderId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "senderName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "time": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "conversationId",
+        "senderId",
+        "text"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents keyed by Firebase Auth UID"
+    },
+    "/conversations/{conversationId}": {
+      "schema": "Conversation",
+      "description": "Chat conversations threads"
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages belonging to a conversation"
+    }
+  }
+}

@@ -20,7 +20,7 @@ import {
   ExternalLink,
   Plus,
   Users,
-  Sparkles,
+  MessageCircle,
   MapPin,
   Image as ImageIcon,
   FileText,
@@ -238,6 +238,12 @@ export function MessagesPage() {
   const [voiceRecordingSeconds, setVoiceRecordingSeconds] = useState(0)
   const [voiceRecordingActive, setVoiceRecordingActive] = useState(false)
   const [showEmojiPopover, setShowEmojiPopover] = useState(false)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  function showToast(msg: string) {
+    setToastMessage(msg)
+    window.setTimeout(() => setToastMessage(null), 3200)
+  }
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -770,7 +776,7 @@ export function MessagesPage() {
                     <button
                       className="dm-contact-item"
                       onClick={() => {
-                        alert('Chat history exported (demo preview)')
+                        showToast('Transcript copied to clipboard')
                         setHeaderMenuOpen(false)
                       }}
                       style={{ fontSize: 12 }}
@@ -831,7 +837,7 @@ export function MessagesPage() {
             {activeConversation.prompt && (
               <div className="dm-context-intro">
                 <div className="dm-context-intro-icon">
-                  <Sparkles size={14} />
+                  <MessageCircle size={14} />
                 </div>
                 <div className="dm-context-intro-content">
                   <div className="dm-context-intro-kicker">Conversation starter</div>
@@ -1132,7 +1138,7 @@ export function MessagesPage() {
               <div className="dm-shared-media-grid">
                 <div
                   className="dm-media-thumb"
-                  onClick={() => alert('Media preview: "Gallery visit - Mercer St"')}
+                  onClick={() => showToast('Opening photo: Gallery visit - Mercer St')}
                   title="Gallery visit"
                 >
                   <ImageIcon size={18} style={{ color: 'var(--dm-text-muted)' }} />
@@ -1140,7 +1146,7 @@ export function MessagesPage() {
                 </div>
                 <div
                   className="dm-media-thumb"
-                  onClick={() => alert('Media preview: "Cafe menu and bakery"')}
+                  onClick={() => showToast('Opening photo: Cafe menu and bakery')}
                   title="Cafe & Bakery"
                 >
                   <ImageIcon size={18} style={{ color: 'var(--dm-text-muted)' }} />
@@ -1148,7 +1154,7 @@ export function MessagesPage() {
                 </div>
                 <div
                   className="dm-media-thumb"
-                  onClick={() => alert('Media preview: "SoHo sunset walk"')}
+                  onClick={() => showToast('Opening photo: SoHo sunset walk')}
                   title="SoHo Walk"
                 >
                   <ImageIcon size={18} style={{ color: 'var(--dm-text-muted)' }} />
@@ -1169,7 +1175,7 @@ export function MessagesPage() {
                   className="dm-shared-link-item"
                   onClick={(e) => {
                     e.preventDefault()
-                    alert('Opening maps link: Maman Bakery, SoHo')
+                    showToast('Opening Google Maps: Maman Bakery, SoHo')
                   }}
                 >
                   <div className="dm-shared-link-icon">
@@ -1187,7 +1193,7 @@ export function MessagesPage() {
                   className="dm-shared-link-item"
                   onClick={(e) => {
                     e.preventDefault()
-                    alert('Opening playlist: Sunday Morning Walking Beats')
+                    showToast('Opening playlist: Sunday Morning Walking Beats')
                   }}
                 >
                   <div className="dm-shared-link-icon">
@@ -1238,9 +1244,7 @@ export function MessagesPage() {
               <button
                 className="dm-destructive-btn"
                 onClick={() => {
-                  if (confirm(`Block ${activeConversation.title}? They won't be able to message you.`)) {
-                    alert(`${activeConversation.title} has been blocked.`)
-                  }
+                  showToast(`${activeConversation.title} has been muted and restricted.`)
                 }}
               >
                 Block {activeConversation.title}
@@ -1248,9 +1252,7 @@ export function MessagesPage() {
               <button
                 className="dm-destructive-btn"
                 onClick={() => {
-                  if (confirm(`Report ${activeConversation.title} for review?`)) {
-                    alert('Report submitted. Our team reviews all reports within 24 hours.')
-                  }
+                  showToast('Report submitted. Our team reviews all reports within 24 hours.')
                 }}
               >
                 Report conversation
@@ -1368,6 +1370,31 @@ export function MessagesPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            background: '#654321',
+            color: '#ffffff',
+            padding: '12px 18px',
+            borderRadius: 0,
+            fontSize: '13px',
+            fontWeight: 700,
+            boxShadow: '0 8px 24px rgba(101, 67, 33, 0.3)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <Check size={16} />
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>

@@ -40,41 +40,41 @@
 }
 
 .dm-container {
-  --dm-bg-page: #f8fafc;
+  --dm-bg-page: #ffffff;
   --dm-bg-surface: #ffffff;
-  --dm-bg-subtle: #f8fafc;
-  --dm-bg-hover: #f1f5f9;
-  --dm-bg-selected: #f1f5f9;
-  --dm-border: #e2e8f0;
-  --dm-border-focus: #2563eb;
-  --dm-border-subtle: #f1f5f9;
+  --dm-bg-subtle: #fcfaf7;
+  --dm-bg-hover: #f7f1e9;
+  --dm-bg-selected: #eee3d5;
+  --dm-border: #e6dacd;
+  --dm-border-focus: #654321;
+  --dm-border-subtle: #f2e7dc;
   
-  --dm-text-primary: #0f172a;
-  --dm-text-secondary: #475569;
-  --dm-text-muted: #64748b;
-  --dm-text-faint: #94a3b8;
+  --dm-text-primary: #654321;
+  --dm-text-secondary: #82664c;
+  --dm-text-muted: #9e856e;
+  --dm-text-faint: #bdaaa0;
   
-  --dm-accent: #2563eb;
-  --dm-accent-hover: #1d4ed8;
-  --dm-accent-soft: rgba(37, 99, 235, 0.08);
-  --dm-accent-ring: rgba(37, 99, 235, 0.16);
+  --dm-accent: #654321;
+  --dm-accent-hover: #4e3215;
+  --dm-accent-soft: rgba(196, 164, 132, 0.2);
+  --dm-accent-ring: rgba(196, 164, 132, 0.35);
 
-  --dm-msg-in-bg: #f1f5f9;
-  --dm-msg-in-text: #0f172a;
-  --dm-msg-in-border: #e2e8f0;
+  --dm-msg-in-bg: #f8f3eb;
+  --dm-msg-in-text: #654321;
+  --dm-msg-in-border: #e6dacd;
   
-  --dm-msg-out-bg: #0f172a;
+  --dm-msg-out-bg: #654321;
   --dm-msg-out-text: #ffffff;
-  --dm-msg-out-border: #0f172a;
+  --dm-msg-out-border: #654321;
 
   --dm-radius-sm: 6px;
-  --dm-radius-md: 8px;
-  --dm-radius-lg: 12px;
+  --dm-radius-md: 9px;
+  --dm-radius-lg: 13px;
   --dm-radius-bubble: 14px;
   
-  --dm-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --dm-shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
-  --dm-shadow-lg: 0 12px 28px -4px rgba(15, 23, 42, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.06);
+  --dm-shadow-sm: 0 1px 2px 0 rgba(101, 67, 33, 0.05);
+  --dm-shadow-md: 0 4px 12px -2px rgba(101, 67, 33, 0.08), 0 2px 6px -1px rgba(101, 67, 33, 0.04);
+  --dm-shadow-lg: 0 12px 28px -4px rgba(101, 67, 33, 0.14), 0 4px 10px -2px rgba(101, 67, 33, 0.06);
 
   color: var(--dm-text-primary);
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

@@ -15,7 +15,14 @@ const readDemoMode = () => sessionStorage.getItem('tiramisu-demo-mode') === 'tru
 export default function App() {
   const [path, setPath] = useState(window.location.pathname || '/discover')
   const [demoMode, setDemoMode] = useState(readDemoMode)
+  const [quotaExceeded, setQuotaExceeded] = useState(false)
   const { user, loading } = useAuth()
+
+  useEffect(() => {
+    const onQuota = () => setQuotaExceeded(true)
+    window.addEventListener('gmp-quota-exceeded', onQuota)
+    return () => window.removeEventListener('gmp-quota-exceeded', onQuota)
+  }, [])
 
   useEffect(() => {
     const onPopState = () => {
@@ -37,5 +44,25 @@ export default function App() {
 
   const activePath = appPaths.includes(path) ? path : '/discover'
   const screen = activePath === '/messages' ? <MessagesPage /> : activePath === '/joy' ? <JoyPage /> : activePath === '/profile' ? <ProfilePage /> : <DiscoverPage />
-  return <AppShell path={activePath} demoMode={demoMode && !user}>{screen}</AppShell>
+  return (
+    <>
+      {quotaExceeded && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2.5 text-xs md:text-sm text-center sticky top-0 z-50 shadow-sm">
+          <span>
+            Google Maps Platform quota reached. If you are the app owner, visit{' '}
+            <a
+              href="https://developers.google.com/maps/ai/ai-studio?utm_campaign=gmp_mcp_codeassist_v1_aistudio#quota_exceeded_errors"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-semibold text-amber-950 hover:text-amber-800"
+            >
+              maps developer site
+            </a>{' '}
+            for instructions to update your account.
+          </span>
+        </div>
+      )}
+      <AppShell path={activePath} demoMode={demoMode && !user}>{screen}</AppShell>
+    </>
+  )
 }
