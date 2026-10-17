@@ -1,0 +1,7 @@
+{
+  "name": "Tiramisu — Make new friends",
+  "description": "A low-pressure way to meet your next favorite person.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
