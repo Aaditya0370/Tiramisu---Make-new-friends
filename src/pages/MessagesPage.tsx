@@ -28,7 +28,8 @@ import {
   Bell,
   BellOff,
   ShieldAlert,
-  ArrowUpRight
+  ArrowUpRight,
+  Sparkles
 } from 'lucide-react'
 import { demoConversations, demoProfiles, type DemoProfile } from '../data/demo'
 import { formatInitials } from '../lib/utils'
@@ -219,18 +220,201 @@ const INITIAL_CONVERSATIONS: ExtendedConversation[] = [
   },
 ]
 
+const STORAGE_KEY = 'tiramisu_conversations_v3'
+
+function loadSavedConversations(): ExtendedConversation[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    }
+  } catch (err) {
+    console.warn('Failed to load conversations', err)
+  }
+  return INITIAL_CONVERSATIONS
+}
+
+function playChatTone(freq: number, duration: number) {
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    if (!AudioCtx) return
+    const ctx = new AudioCtx()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(freq, ctx.currentTime)
+    gain.gain.setValueAtTime(0.06, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration)
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + duration)
+  } catch {
+    // audio context blocked safe ignore
+  }
+}
+
+function generateBotReply(sender: string, userText: string, conv: ExtendedConversation): string {
+  const text = userText.toLowerCase()
+
+  if (text.includes('voice note') || text.includes('🎤')) {
+    return `Loved hearing your voice note! You have such a warm, friendly voice. Let's definitely coordinate for this weekend!`
+  }
+
+  if (
+    text.includes('weekend') ||
+    text.includes('saturday') ||
+    text.includes('sunday') ||
+    text.includes('tomorrow') ||
+    text.includes('free')
+  ) {
+    const plans = [
+      `Saturday afternoon around 2:00 PM would be wonderful! We could grab coffee and check out that little courtyard.`,
+      `I'm completely free Sunday after 11:30 AM! Let's do a casual stroll around SoHo and grab pastries.`,
+      `That timing works great for me! Should we meet up right near Prince St?`,
+    ]
+    return plans[Math.floor(Math.random() * plans.length)]
+  }
+
+  if (
+    text.includes('coffee') ||
+    text.includes('bakery') ||
+    text.includes('pastry') ||
+    text.includes('focaccia') ||
+    text.includes('matcha') ||
+    text.includes('tea') ||
+    text.includes('food')
+  ) {
+    if (sender.includes('Maya')) {
+      return `That bakery on Prince St has the warmest cardamom buns and oat cortados. You'll love the vibe there!`
+    }
+    if (sender.includes('Noah')) {
+      return `Oh you're speaking my language! There's an Italian pastry counter around the corner with legendary cannoli. Detour mandatory!`
+    }
+    if (sender.includes('Riley')) {
+      return `I know an espresso bar in Williamsburg with giant windows and incredible filter roast. Perfect for an easy conversation.`
+    }
+    return `That sounds so cozy. I'm always looking for a good coffee excuse! Let's make it happen.`
+  }
+
+  if (text.includes('where') || text.includes('location') || text.includes('address') || text.includes('spot')) {
+    return `It's right near Mercer St, just a couple of minutes south of Houston. Look for the leafy ivy archway!`
+  }
+
+  if (text.includes('game') || text.includes('chess') || text.includes('quiz') || text.includes('math')) {
+    return `Haha, I love games! I've been playing that lightning math quiz and chess on the Joy tab. Have you tried it?`
+  }
+
+  if (text.includes('photo') || text.includes('film') || text.includes('camera') || text.includes('art') || text.includes('music')) {
+    if (sender.includes('Riley')) {
+      return `I just loaded a fresh roll of Portra 400! The late afternoon light along the brick facades today is going to be unreal.`
+    }
+    if (sender.includes('Maya')) {
+      return `I've been collecting vintage jazz vinyl while throwing ceramics. It creates the most peaceful flow state.`
+    }
+    return `Yes! Finding someone with that exact appreciation is so refreshing. What have you been creating or listening to lately?`
+  }
+
+  if (text.includes('hi') || text.includes('hello') || text.includes('hey') || text.includes('good morning')) {
+    return `Hey! So glad you reached out. How has your day been treating you?`
+  }
+
+  if (text.includes('sounds good') || text.includes('great') || text.includes('cool') || text.includes('yes') || text.includes('perfect')) {
+    return `Awesome! I'm really looking forward to it. I'll shoot you a quick note beforehand!`
+  }
+
+  if (sender.includes('Maya')) {
+    const r = [
+      `I completely agree! It's so true. Also, have you seen that tiny artisan pop-up near Spring St?`,
+      `That's so thoughtful. That's honestly what I love about this neighborhood—every block has its own personality.`,
+      `Haha totally! What kind of creative projects or hobbies have been keeping you inspired lately?`,
+    ]
+    return r[Math.floor(Math.random() * r.length)]
+  }
+
+  if (sender.includes('Noah')) {
+    const r = [
+      `Haha couldn't agree more! The best adventures are always the unplanned ones.`,
+      `100%! If you ever need recommendations for quirky neighborhood spots, I've got a whole mental catalog.`,
+      `Spot on! You have awesome energy. Are you having a good week?`,
+    ]
+    return r[Math.floor(Math.random() * r.length)]
+  }
+
+  if (sender.includes('Riley')) {
+    const r = [
+      `Totally. Sometimes just taking a slow walk and observing the architecture resets your whole mind.`,
+      `Love that. Do you explore mostly around Manhattan or cross the bridge into Brooklyn often?`,
+      `Yes! Let's definitely swap some favorite quiet reading spots and secret lookouts!`,
+    ]
+    return r[Math.floor(Math.random() * r.length)]
+  }
+
+  return `That makes so much sense! It's rare to meet someone with that exact vibe. Tell me more about that!`
+}
+
+function getQuickStarters(conv: ExtendedConversation): string[] {
+  if (conv.isGroup) {
+    return [
+      '☕ Saturday 2:30 PM at McNally Jackson works for me!',
+      '📚 Count me in for the book & coffee crawl!',
+      '🥐 Are there good bakery stops along the route?',
+    ]
+  }
+  if (conv.title.includes('Maya')) {
+    return [
+      '🥖 What bakery do you recommend on Prince St?',
+      '🎨 Have you tried making ceramics yourself?',
+      '☕ How about grabbing coffee this Saturday around 2 PM?',
+    ]
+  }
+  if (conv.title.includes('Noah')) {
+    return [
+      '🍕 What is the best detour snack you have found?',
+      '🚶‍♂️ Always down for a spontaneous neighborhood wander!',
+      '😂 Got any hilarious stories from this week?',
+    ]
+  }
+  if (conv.title.includes('Riley')) {
+    return [
+      '📷 What 35mm film do you usually shoot on?',
+      '☕ Where is this coffee spot with the great morning light?',
+      '🐕 Seen any confident dogs today?',
+    ]
+  }
+  return [
+    '👋 Hey! What are you up to today?',
+    '☕ Want to grab a coffee this weekend?',
+    '✨ Loved your prompt on your profile!',
+  ]
+}
+
 export function MessagesPage() {
-  const [conversations, setConversations] = useState<ExtendedConversation[]>(INITIAL_CONVERSATIONS)
-  const [activeId, setActiveId] = useState<string>(INITIAL_CONVERSATIONS[0].id)
+  const [conversations, setConversations] = useState<ExtendedConversation[]>(loadSavedConversations)
+  const [activeId, setActiveId] = useState<string>(() => loadSavedConversations()[0]?.id || INITIAL_CONVERSATIONS[0].id)
   const [tab, setTab] = useState<TabType>('all')
   const [query, setQuery] = useState('')
   const [draft, setDraft] = useState('')
   const [replyingTo, setReplyingTo] = useState<ExtendedMessage | null>(null)
-  const [showDetails, setShowDetails] = useState(true)
+  const [showDetails, setShowDetails] = useState(false)
   const [showInChatSearch, setShowInChatSearch] = useState(false)
   const [inChatQuery, setInChatQuery] = useState('')
   const [mobileChatOpen, setMobileChatOpen] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [typingStatus, setTypingStatus] = useState<{ contactId: string; name: string } | null>(null)
+
+  // Live Calling simulation
+  const [callState, setCallState] = useState<{
+    active: boolean
+    type: 'voice' | 'video'
+    contact: string
+    avatarClass: string
+    initials: string
+    connected: boolean
+    seconds: number
+    isMuted: boolean
+  } | null>(null)
 
   // Modals & popovers
   const [showNewMsgModal, setShowNewMsgModal] = useState(false)
@@ -249,8 +433,110 @@ export function MessagesPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  // Save conversations to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations))
+    } catch {
+      // quota safe
+    }
+  }, [conversations])
+
+  // Handle incoming contact from DiscoverPage or DiscoveryMap
+  useEffect(() => {
+    const target =
+      sessionStorage.getItem('tiramisu_target_contact') ||
+      new URLSearchParams(window.location.search).get('contact')
+
+    if (!target) return
+    sessionStorage.removeItem('tiramisu_target_contact')
+
+    const existing = conversations.find(
+      (c) => c.profileId === target || c.id === target || c.id === `${target}-thread`
+    )
+
+    if (existing) {
+      setActiveId(existing.id)
+      setMobileChatOpen(true)
+      return
+    }
+
+    const prof = demoProfiles.find((p) => p.id === target)
+    if (prof) {
+      const newConv: ExtendedConversation = {
+        id: `${prof.id}-thread`,
+        profileId: prof.id,
+        title: prof.name,
+        handle: prof.handle,
+        avatarClass: prof.avatarClass,
+        initials: prof.initials,
+        isGroup: false,
+        preview: `Hey there! Loved seeing you on the map.`,
+        time: 'Just now',
+        unread: 0,
+        pinned: false,
+        muted: false,
+        status: 'Active now',
+        location: `${prof.city} · ${prof.distance}`,
+        energy: prof.energy,
+        prompt: prof.prompt,
+        messages: [
+          {
+            id: `msg-${Date.now()}-opener`,
+            from: 'them',
+            senderName: prof.name,
+            text: `Hey! I saw we're both in the neighborhood and both enjoy ${prof.interests.slice(0, 2).join(' & ')}. What are you up to today?`,
+            time: 'Just now',
+            reactions: [{ emoji: '👋', count: 1, active: true }],
+          },
+        ],
+      }
+      setConversations((prev) => [newConv, ...prev])
+      setActiveId(newConv.id)
+      setMobileChatOpen(true)
+    }
+  }, [conversations])
+
+  // Call timer simulation
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>
+    if (callState?.active) {
+      interval = setInterval(() => {
+        setCallState((prev) => {
+          if (!prev) return null
+          return {
+            ...prev,
+            connected: true,
+            seconds: prev.seconds + 1,
+          }
+        })
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [callState?.active])
+
+  function startCall(type: 'voice' | 'video') {
+    setCallState({
+      active: true,
+      type,
+      contact: activeConversation.title,
+      avatarClass: activeConversation.avatarClass,
+      initials: activeConversation.initials,
+      connected: false,
+      seconds: 0,
+      isMuted: false,
+    })
+    playChatTone(440, 0.2)
+  }
+
+  function endCall() {
+    setCallState(null)
+    playChatTone(330, 0.15)
+    showToast('Call ended')
+  }
+
   const activeConversation = useMemo(
-    () => conversations.find((c) => c.id === activeId) ?? conversations[0],
+    () => conversations.find((c) => c.id === activeId) ?? conversations[0] ?? INITIAL_CONVERSATIONS[0],
     [conversations, activeId]
   )
 
@@ -262,11 +548,8 @@ export function MessagesPage() {
   // Filter conversations by tab and search query
   const filteredConversations = useMemo(() => {
     return conversations.filter((c) => {
-      // Tab filter
       if (tab === 'unread' && c.unread === 0) return false
       if (tab === 'groups' && !c.isGroup) return false
-
-      // Text query
       if (!query.trim()) return true
       const q = query.toLowerCase()
       const matchName = c.title.toLowerCase().includes(q)
@@ -286,7 +569,7 @@ export function MessagesPage() {
   // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [activeConversation.messages])
+  }, [activeConversation.messages, typingStatus])
 
   // Voice recording timer simulation
   useEffect(() => {
@@ -312,7 +595,7 @@ export function MessagesPage() {
     )
   }
 
-  // Send message
+  // Send message with instant feedback & responsive bot reply
   function handleSendMessage(e?: FormEvent) {
     if (e) e.preventDefault()
     const trimmed = draft.trim()
@@ -336,9 +619,14 @@ export function MessagesPage() {
         : undefined,
     }
 
+    const currentConv = activeConversation
+
+    // Play subtle soft outbound blip
+    playChatTone(580, 0.08)
+
     setConversations((prev) =>
       prev.map((c) => {
-        if (c.id === activeId) {
+        if (c.id === currentConv.id) {
           return {
             ...c,
             preview: trimmed,
@@ -354,10 +642,54 @@ export function MessagesPage() {
     setReplyingTo(null)
     setShowEmojiPopover(false)
 
-    // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = '48px'
     }
+
+    // Trigger authentic simulated reply from contact
+    const responder = currentConv.isGroup
+      ? currentConv.groupMembers?.[Math.floor(Math.random() * (currentConv.groupMembers.length || 1))] || 'Maya Chen'
+      : currentConv.title
+
+    window.setTimeout(() => {
+      setTypingStatus({ contactId: currentConv.id, name: responder })
+    }, 550)
+
+    window.setTimeout(() => {
+      setTypingStatus(null)
+
+      const replyText = generateBotReply(responder, trimmed, currentConv)
+      const rNow = new Date()
+      const rTimeStr = rNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+      const replyMsg: ExtendedMessage = {
+        id: `reply-${Date.now()}`,
+        from: 'them',
+        senderName: responder,
+        text: replyText,
+        time: rTimeStr,
+        read: true,
+        reactions: Math.random() > 0.65 ? [{ emoji: '✨', count: 1, active: true }] : undefined,
+      }
+
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id === currentConv.id) {
+            const updated = c.messages.map((m) => ({ ...m, read: true }))
+            return {
+              ...c,
+              preview: replyText,
+              time: 'Just now',
+              messages: [...updated, replyMsg],
+            }
+          }
+          return c
+        })
+      )
+
+      // Play soft inbound chime
+      playChatTone(860, 0.12)
+    }, 1800)
   }
 
   // Handle textarea enter key
@@ -452,18 +784,24 @@ export function MessagesPage() {
 
     const now = new Date()
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const seconds = voiceRecordingSeconds || 4
 
     const voiceMsg: ExtendedMessage = {
       id: `voice-${Date.now()}`,
       from: 'me',
-      text: `🎤 Voice note (${voiceRecordingSeconds}s) — “Hey, let’s definitely catch up this weekend!”`,
+      text: `🎤 Voice note (${seconds}s) — “Hey, let’s definitely catch up this weekend!”`,
       time: timeStr,
       read: false,
     }
 
+    playChatTone(580, 0.08)
+
+    const currentId = activeId
+    const currentConv = activeConversation
+
     setConversations((prev) =>
       prev.map((c) => {
-        if (c.id === activeId) {
+        if (c.id === currentId) {
           return {
             ...c,
             preview: 'Voice note sent',
@@ -475,6 +813,44 @@ export function MessagesPage() {
       })
     )
     setVoiceRecordingSeconds(0)
+
+    const responder = currentConv.isGroup
+      ? currentConv.groupMembers?.[0] || 'Maya Chen'
+      : currentConv.title
+
+    window.setTimeout(() => {
+      setTypingStatus({ contactId: currentId, name: responder })
+    }, 600)
+
+    window.setTimeout(() => {
+      setTypingStatus(null)
+      const rNow = new Date()
+      const rTimeStr = rNow.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const replyMsg: ExtendedMessage = {
+        id: `reply-${Date.now()}`,
+        from: 'them',
+        senderName: responder,
+        text: `Loved hearing your voice note! You have such a warm, friendly voice. Let’s definitely meet up this weekend!`,
+        time: rTimeStr,
+        read: true,
+        reactions: [{ emoji: '✨', count: 1, active: true }],
+      }
+
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id === currentId) {
+            return {
+              ...c,
+              preview: replyMsg.text,
+              time: 'Just now',
+              messages: [...c.messages, replyMsg],
+            }
+          }
+          return c
+        })
+      )
+      playChatTone(860, 0.12)
+    }, 1900)
   }
 
   // Start chat with a contact from New Message modal
@@ -713,6 +1089,24 @@ export function MessagesPage() {
             {/* Header Right Actions */}
             <div className="dm-chat-header-actions">
               <button
+                className="dm-icon-action"
+                onClick={() => startCall('voice')}
+                title="Start audio call"
+                aria-label="Start audio call"
+              >
+                <Phone size={16} />
+              </button>
+
+              <button
+                className="dm-icon-action"
+                onClick={() => startCall('video')}
+                title="Start video call"
+                aria-label="Start video call"
+              >
+                <Video size={16} />
+              </button>
+
+              <button
                 className={`dm-icon-action ${showInChatSearch ? 'is-active' : ''}`}
                 onClick={() => {
                   setShowInChatSearch((v) => !v)
@@ -761,7 +1155,7 @@ export function MessagesPage() {
                       top: 40,
                       display: 'flex',
                       flexDirection: 'column',
-                      width: 170,
+                      width: 180,
                       padding: 6,
                     }}
                   >
@@ -783,6 +1177,19 @@ export function MessagesPage() {
                     >
                       <ArrowUpRight size={14} />
                       <span>Export transcript</span>
+                    </button>
+                    <button
+                      className="dm-contact-item"
+                      onClick={() => {
+                        localStorage.removeItem(STORAGE_KEY)
+                        setConversations(INITIAL_CONVERSATIONS)
+                        showToast('Conversations reset to sample data')
+                        setHeaderMenuOpen(false)
+                      }}
+                      style={{ fontSize: 12 }}
+                    >
+                      <Sparkles size={14} />
+                      <span>Reset sample chats</span>
                     </button>
                     <button
                       className="dm-destructive-btn"
@@ -964,6 +1371,37 @@ export function MessagesPage() {
               )
             })}
 
+            {/* Real-time Character Typing Indicator */}
+            {typingStatus && typingStatus.contactId === activeConversation.id && (
+              <div
+                className="dm-message-row from-them turn-break"
+                style={{ animation: 'pop-in 0.2s ease', margin: '4px 0 8px' }}
+              >
+                <div className="dm-bubble-wrap">
+                  <div
+                    className="dm-message-bubble"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '9px 14px',
+                      background: '#f4ede4',
+                      borderRadius: '14px 14px 14px 4px',
+                    }}
+                  >
+                    <span style={{ fontSize: '12px', color: '#82664c', fontWeight: 600 }}>
+                      {typingStatus.name} is typing
+                    </span>
+                    <div className="dm-typing-dots">
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {displayedMessages.length === 0 && (
               <div className="dm-empty-sidebar" style={{ margin: 'auto' }}>
                 <p>No messages match your search.</p>
@@ -971,6 +1409,26 @@ export function MessagesPage() {
             )}
 
             <div ref={messagesEndRef} />
+          </div>
+
+          {/* Quick Icebreaker Conversation Starter Chips */}
+          <div className="dm-quick-starters-row">
+            {getQuickStarters(activeConversation).map((starter, i) => (
+              <button
+                key={i}
+                type="button"
+                className="dm-starter-pill"
+                onClick={() => {
+                  setDraft(starter)
+                  if (textareaRef.current) {
+                    textareaRef.current.focus()
+                  }
+                }}
+              >
+                <Sparkles size={11} />
+                <span>{starter}</span>
+              </button>
+            ))}
           </div>
 
           {/* ==================================================================
@@ -1368,6 +1826,81 @@ export function MessagesPage() {
                   Send voice note
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live Audio / Video Call Simulation Modal */}
+      {callState?.active && (
+        <div className="dm-call-modal-backdrop" onClick={endCall}>
+          <div className="dm-call-card" onClick={(e) => e.stopPropagation()}>
+            <div className="dm-call-avatar-wrap">
+              <div className="dm-call-pulse-ring" />
+              <div className={`dm-call-avatar ${callState.avatarClass}`}>
+                {callState.initials}
+              </div>
+            </div>
+
+            <h3 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 6px' }}>
+              {callState.contact}
+            </h3>
+            <p style={{ fontSize: '13px', color: '#c4a484', margin: '0 0 24px' }}>
+              {callState.connected
+                ? `${callState.type === 'video' ? 'Video call' : 'Audio call'} connected · ${Math.floor(
+                    callState.seconds / 60
+                  )
+                    .toString()
+                    .padStart(2, '0')}:${(callState.seconds % 60)
+                    .toString()
+                    .padStart(2, '0')}`
+                : `Calling ${callState.contact}…`}
+            </p>
+
+            {/* Audio visualizer wave */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                height: '28px',
+                marginBottom: '28px',
+              }}
+            >
+              {[14, 22, 10, 26, 18, 28, 12, 20].map((h, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    width: '3px',
+                    height: `${callState.connected ? h : 6}px`,
+                    background: '#c4a484',
+                    borderRadius: '2px',
+                    transition: 'height 0.2s ease',
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="dm-call-controls">
+              <button
+                type="button"
+                className="dm-call-action-btn"
+                onClick={() =>
+                  setCallState((prev) => (prev ? { ...prev, isMuted: !prev.isMuted } : null))
+                }
+                title={callState.isMuted ? 'Unmute microphone' : 'Mute microphone'}
+              >
+                {callState.isMuted ? <Mic size={20} style={{ opacity: 0.4 }} /> : <Mic size={20} />}
+              </button>
+              <button
+                type="button"
+                className="dm-call-action-btn hangup"
+                onClick={endCall}
+                title="End call"
+              >
+                <Phone size={24} style={{ transform: 'rotate(135deg)' }} />
+              </button>
             </div>
           </div>
         </div>

@@ -1,29 +1,63 @@
 import { useState, type FormEvent } from 'react'
-import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
+import { Eye, EyeOff, LockKeyhole, Mail, User as UserIcon, Sparkles } from 'lucide-react'
 import { useAuth } from '../lib/AuthContext'
 import { navigateTo } from '../lib/utils'
 
-export function AuthPage({ mode: _mode }: { mode?: string }) {
-  const { signIn, signInGuest } = useAuth()
+export function AuthPage({ mode = 'login' }: { mode?: string }) {
+  const { signIn, signUp, signInGuest } = useAuth()
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>(
+    mode === 'signup' ? 'signup' : 'login'
+  )
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError('')
-    if (!email.trim() || !email.includes('@')) {
+    setSuccess('')
+
+    const cleanEmail = email.trim()
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       return setError('Enter a valid email address.')
     }
     if (password.length < 6) {
       return setError('Use a password with at least 6 characters.')
     }
-    setBusy(true)
-    const result = await signIn(email.trim(), password)
-    setBusy(false)
-    if (result.error) setError(result.error)
+
+    if (authMode === 'signup') {
+      if (!name.trim()) {
+        return setError('Please enter your name or nickname.')
+      }
+      if (password !== confirmPassword) {
+        return setError('Passwords do not match.')
+      }
+      setBusy(true)
+      const result = await signUp(cleanEmail, password, name.trim())
+      setBusy(false)
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setSuccess('Account created! Welcome to Tiramisu.')
+        sessionStorage.setItem('tiramisu-demo-mode', 'true')
+        window.setTimeout(() => navigateTo('/discover'), 600)
+      }
+    } else {
+      setBusy(true)
+      const result = await signIn(cleanEmail, password)
+      setBusy(false)
+      if (result.error) {
+        setError(result.error)
+      } else {
+        sessionStorage.setItem('tiramisu-demo-mode', 'true')
+        navigateTo('/discover')
+      }
+    }
   }
 
   async function handleGuestMode() {
@@ -38,11 +72,11 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
 
   return (
     <div className="auth-page">
-      {/* Buffer Space / Editorial Side Panel: Cream Brown Background */}
+      {/* Left Column / Editorial Side Panel: Warm Cream Brown */}
       <div
         className="auth-art auth-art-minimal"
         style={{
-          background: '#f6efe6', // Cream brown background
+          background: '#f6efe6',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
@@ -52,13 +86,33 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
         }}
       >
         <div style={{ maxWidth: '440px' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '99px',
+              background: 'rgba(101, 67, 33, 0.08)',
+              color: '#654321',
+              fontSize: '11px',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              marginBottom: '18px',
+            }}
+          >
+            <Sparkles size={12} />
+            <span>Low-pressure social club</span>
+          </div>
+
           <h1
             style={{
               fontSize: 'clamp(42px, 5.2vw, 64px)',
               fontWeight: 900,
-              color: '#654321', // Dark cocoa brown
+              color: '#654321',
               letterSpacing: '-0.04em',
-              margin: '0 0 10px 0',
+              margin: '0 0 12px 0',
               lineHeight: 1,
             }}
           >
@@ -66,20 +120,36 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
           </h1>
           <p
             style={{
-              fontSize: 'clamp(13px, 1.4vw, 16px)',
-              fontWeight: 700,
+              fontSize: 'clamp(14px, 1.4vw, 17px)',
+              fontWeight: 600,
               color: '#82664c',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              margin: 0,
+              lineHeight: 1.5,
+              margin: '0 0 24px',
             }}
           >
-            Connect Play Meet
+            A calm, low-pressure way to discover neighborhood friends, play quick games, and meet
+            your next favorite person.
           </p>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: '16px',
+              fontSize: '12px',
+              fontWeight: 700,
+              color: '#654321',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+            }}
+          >
+            <span>✦ Discovery</span>
+            <span>✦ 4 Bot Games</span>
+            <span>✦ Real-Time Chat</span>
+          </div>
         </div>
       </div>
 
-      {/* Right Column: Generous buffer spacing with pristine login form */}
+      {/* Right Column: Authentication Card with Login & Create Account */}
       <main
         className="auth-card-wrap"
         style={{
@@ -89,28 +159,138 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
           padding: '40px 6vw',
         }}
       >
-        <div className="auth-card" style={{ width: '100%', maxWidth: '380px' }}>
-          <div style={{ marginBottom: '28px' }}>
-            <h2
+        <div className="auth-card" style={{ width: '100%', maxWidth: '390px' }}>
+          {/* Auth Mode Segmented Control: Log In / Create Account */}
+          <div
+            style={{
+              display: 'flex',
+              background: '#f4ede4',
+              borderRadius: '8px',
+              padding: '3px',
+              marginBottom: '24px',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('login')
+                setError('')
+                setSuccess('')
+              }}
               style={{
-                fontSize: '26px',
-                fontWeight: 800,
-                color: '#654321',
-                letterSpacing: '-0.03em',
-                margin: 0,
-                lineHeight: 1.2,
+                flex: 1,
+                padding: '8px 12px',
+                border: 'none',
+                borderRadius: '6px',
+                background: authMode === 'login' ? '#654321' : 'transparent',
+                color: authMode === 'login' ? '#ffffff' : '#654321',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
               }}
             >
               Log In
-            </h2>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('signup')
+                setError('')
+                setSuccess('')
+              }}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                border: 'none',
+                borderRadius: '6px',
+                background: authMode === 'signup' ? '#654321' : 'transparent',
+                color: authMode === 'signup' ? '#ffffff' : '#654321',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Create Account
+            </button>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '16px' }}>
+          <div style={{ marginBottom: '22px' }}>
+            <h2
+              style={{
+                fontSize: '24px',
+                fontWeight: 800,
+                color: '#654321',
+                letterSpacing: '-0.03em',
+                margin: '0 0 4px',
+                lineHeight: 1.2,
+              }}
+            >
+              {authMode === 'signup' ? 'Create your account' : 'Welcome back'}
+            </h2>
+            <p style={{ margin: 0, fontSize: '13px', color: '#82664c' }}>
+              {authMode === 'signup'
+                ? 'Join Tiramisu and start meeting friendly neighbors'
+                : 'Enter your credentials to access your conversations'}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '14px' }}>
+            {/* Name Field (Only for Signup) */}
+            {authMode === 'signup' && (
+              <label style={{ display: 'block' }}>
+                <span
+                  style={{
+                    display: 'block',
+                    marginBottom: '5px',
+                    color: '#654321',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  Your Name or Nickname
+                </span>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    minHeight: '44px',
+                    padding: '0 12px',
+                    border: '1px solid #C4A484',
+                    background: '#ffffff',
+                  }}
+                >
+                  <UserIcon size={16} style={{ color: '#82664c', flexShrink: 0 }} />
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Alex Morgan"
+                    type="text"
+                    autoComplete="name"
+                    style={{
+                      flex: 1,
+                      border: 0,
+                      outline: 0,
+                      color: '#654321',
+                      background: 'transparent',
+                      fontSize: '13px',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
+              </label>
+            )}
+
+            {/* Email Field */}
             <label style={{ display: 'block' }}>
               <span
                 style={{
                   display: 'block',
-                  marginBottom: '6px',
+                  marginBottom: '5px',
                   color: '#654321',
                   fontSize: '11px',
                   fontWeight: 700,
@@ -128,7 +308,6 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
                   minHeight: '44px',
                   padding: '0 12px',
                   border: '1px solid #C4A484',
-                  borderRadius: 0,
                   background: '#ffffff',
                 }}
               >
@@ -152,11 +331,12 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
               </div>
             </label>
 
+            {/* Password Field */}
             <label style={{ display: 'block' }}>
               <span
                 style={{
                   display: 'block',
-                  marginBottom: '6px',
+                  marginBottom: '5px',
                   color: '#654321',
                   fontSize: '11px',
                   fontWeight: 700,
@@ -174,7 +354,6 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
                   minHeight: '44px',
                   padding: '0 12px',
                   border: '1px solid #C4A484',
-                  borderRadius: 0,
                   background: '#ffffff',
                 }}
               >
@@ -182,9 +361,9 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
                 <input
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
+                  placeholder={authMode === 'signup' ? 'Min 6 characters' : 'Enter password'}
                   type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
+                  autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
                   style={{
                     flex: 1,
                     border: 0,
@@ -214,11 +393,59 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
               </div>
             </label>
 
+            {/* Confirm Password Field (Only for Signup) */}
+            {authMode === 'signup' && (
+              <label style={{ display: 'block' }}>
+                <span
+                  style={{
+                    display: 'block',
+                    marginBottom: '5px',
+                    color: '#654321',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  Confirm Password
+                </span>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    minHeight: '44px',
+                    padding: '0 12px',
+                    border: '1px solid #C4A484',
+                    background: '#ffffff',
+                  }}
+                >
+                  <LockKeyhole size={16} style={{ color: '#82664c', flexShrink: 0 }} />
+                  <input
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repeat password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    style={{
+                      flex: 1,
+                      border: 0,
+                      outline: 0,
+                      color: '#654321',
+                      background: 'transparent',
+                      fontSize: '13px',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
+              </label>
+            )}
+
+            {/* Error banner */}
             {error && (
               <div
                 style={{
                   padding: '10px 12px',
-                  borderRadius: 0,
                   fontSize: '12px',
                   color: '#8e3d29',
                   background: '#fdf5f2',
@@ -229,6 +456,22 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
               </div>
             )}
 
+            {/* Success banner */}
+            {success && (
+              <div
+                style={{
+                  padding: '10px 12px',
+                  fontSize: '12px',
+                  color: '#15803d',
+                  background: '#f0fdf4',
+                  border: '1px solid #86efac',
+                }}
+              >
+                {success}
+              </div>
+            )}
+
+            {/* Submit button */}
             <button
               type="submit"
               disabled={busy}
@@ -239,7 +482,6 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
                 background: '#654321',
                 color: '#ffffff',
                 border: '1px solid #654321',
-                borderRadius: 0,
                 fontSize: '13px',
                 fontWeight: 700,
                 cursor: busy ? 'not-allowed' : 'pointer',
@@ -253,12 +495,60 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
                 if (!busy) e.currentTarget.style.background = '#654321'
               }}
             >
-              {busy ? 'Logging in…' : 'Log In'}
+              {busy
+                ? authMode === 'signup'
+                  ? 'Creating account…'
+                  : 'Logging in…'
+                : authMode === 'signup'
+                ? 'Create Account'
+                : 'Log In'}
             </button>
           </form>
 
-          {/* Guest mode button without logo */}
-          <div style={{ marginTop: '16px' }}>
+          {/* Toggle between Login and Signup */}
+          <div style={{ textAlign: 'center', marginTop: '14px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode(authMode === 'login' ? 'signup' : 'login')
+                setError('')
+                setSuccess('')
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#654321',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+              }}
+            >
+              {authMode === 'login'
+                ? "Don't have an account? Create one"
+                : 'Already have an account? Log in'}
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              margin: '18px 0',
+              color: '#c4a484',
+              fontSize: '11px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            <div style={{ flex: 1, height: '1px', background: '#ebd9c8' }} />
+            <span>or explore</span>
+            <div style={{ flex: 1, height: '1px', background: '#ebd9c8' }} />
+          </div>
+
+          {/* Guest mode button */}
+          <div>
             <button
               type="button"
               onClick={handleGuestMode}
@@ -268,7 +558,6 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
                 background: '#ffffff',
                 color: '#654321',
                 border: '1px solid #C4A484',
-                borderRadius: 0,
                 fontSize: '13px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -283,7 +572,7 @@ export function AuthPage({ mode: _mode }: { mode?: string }) {
                 e.currentTarget.style.borderColor = '#C4A484'
               }}
             >
-              Guest mode
+              Continue in Guest Mode
             </button>
           </div>
         </div>

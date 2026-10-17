@@ -23,6 +23,7 @@ export function ProfilePage() {
       'Collecting quiet joys, design experiments, and thoughtful people who make ordinary plans feel worth showing up for.'
   )
   const [isEditing, setIsEditing] = useState(false)
+  const [savedMessage, setSavedMessage] = useState<string | null>(null)
 
   // Social links state
   const [socials, setSocials] = useState({
@@ -78,16 +79,21 @@ export function ProfilePage() {
 
   async function handleToggleEdit() {
     if (isEditing) {
+      const trimmedName = name.trim() || 'Adi Gamerz'
+      const trimmedLocation = location.trim() || 'New York, NY'
+      const trimmedBio = bio.trim()
       try {
         await updateProfile({
-          displayName: name.trim() || 'Adi Gamerz',
-          location: location.trim(),
-          bio: bio.trim(),
+          displayName: trimmedName,
+          location: trimmedLocation,
+          bio: trimmedBio,
           linkedin: socials.linkedin.trim(),
           instagram: socials.instagram.trim(),
           facebook: socials.facebook.trim(),
           x: socials.x.trim(),
         })
+        setSavedMessage('Profile changes sustained & saved!')
+        setTimeout(() => setSavedMessage(null), 3000)
       } catch (err) {
         console.error('Failed to save profile to Firestore:', err)
       }
@@ -124,7 +130,7 @@ export function ProfilePage() {
       }}
     >
       {/* 1. Just a text saying: Your Profile */}
-      <div style={{ marginBottom: '28px' }}>
+      <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <h1
           style={{
             fontSize: '15px',
@@ -137,6 +143,27 @@ export function ProfilePage() {
         >
           Your Profile
         </h1>
+        {savedMessage && (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              background: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              borderRadius: '99px',
+              color: '#065f46',
+              fontSize: '12px',
+              fontWeight: 700,
+              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.12)',
+              animation: 'fade-in 0.2s ease-out',
+            }}
+          >
+            <Check size={14} />
+            <span>{savedMessage}</span>
+          </div>
+        )}
       </div>
 
       {/* Main Profile Card Container */}

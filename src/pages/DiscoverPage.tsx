@@ -114,7 +114,13 @@ export function DiscoverPage() {
                 <i className="online-dot" /> {selected.status}
               </span>
             </div>
-            <PrimaryButton onClick={() => navigateTo('/messages')} className="modal-cta">
+            <PrimaryButton
+              onClick={() => {
+                sessionStorage.setItem('tiramisu_target_contact', selected.id)
+                navigateTo('/messages?contact=' + encodeURIComponent(selected.id))
+              }}
+              className="modal-cta"
+            >
               Start a conversation
             </PrimaryButton>
           </section>

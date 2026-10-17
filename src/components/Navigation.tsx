@@ -11,8 +11,16 @@ const items: NavItem[] = [
   { path: '/profile', label: 'Profile', icon: UserRound },
 ]
 
-export function Navigation({ path, userEmail }: { path: string; userEmail?: string }) {
+export function Navigation({ path, userEmail, userName }: { path: string; userEmail?: string; userName?: string }) {
   const current = path === '/' ? '/discover' : path
+  const displayName = userName || userEmail?.split('@')[0] || 'Your profile'
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .map((w: string) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'U'
 
   return (
     <>
@@ -62,13 +70,15 @@ export function Navigation({ path, userEmail }: { path: string; userEmail?: stri
             }}
           >
             <Avatar
-              initials={userEmail?.[0]?.toUpperCase() ?? 'A'}
+              initials={initials}
               avatarClass="avatar-violet"
               size="sm"
               online
             />
             <div>
-              <strong>{userEmail?.split('@')[0] ?? 'Your profile'}</strong>
+              <strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
+                {displayName}
+              </strong>
               <span>Open profile</span>
             </div>
           </button>

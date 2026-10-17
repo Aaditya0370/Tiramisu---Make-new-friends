@@ -36,6 +36,7 @@ type AuthContextValue = {
   loading: boolean
   configured: boolean
   signIn: (email: string, password: string) => Promise<AuthResult>
+  signUp: (email: string, password: string, displayName?: string) => Promise<AuthResult>
   signInWithGoogle: () => Promise<AuthResult>
   signInGuest: () => Promise<AuthResult>
   signOut: () => Promise<AuthResult>
@@ -61,9 +62,36 @@ function friendlyError(error: unknown): string {
   return message
 }
 
+const LOCAL_PROFILE_KEY = 'tiramisu_user_profile'
+
+function getStoredProfile(): UserProfile | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_PROFILE_KEY)
+    if (raw) return JSON.parse(raw) as UserProfile
+  } catch (e) {
+    console.warn('Failed to parse local profile:', e)
+  }
+  return null
+}
+
+const DEFAULT_PROFILE: UserProfile = {
+  id: 'guest-local-user',
+  displayName: 'Adi Gamerz',
+  email: 'adi@tiramisu.club',
+  location: 'New York, NY',
+  bio: 'Collecting quiet joys, design experiments, and thoughtful people who make ordinary plans feel worth showing up for.',
+  linkedin: 'linkedin.com/in/adigamerz',
+  instagram: '@adi.creatives',
+  facebook: 'facebook.com/adigamerz',
+  x: '@adigamerz',
+  initials: 'AG',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [profile, setProfile] = useState<UserProfile>(() => getStoredProfile() || DEFAULT_PROFILE)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -86,7 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userDocRef,
           async (snapshot) => {
             if (snapshot.exists()) {
-              setProfile(snapshot.data() as UserProfile)
+              const remoteProfile = snapshot.data() as UserProfile
+              setProfile(remoteProfile)
+              localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(remoteProfile))
             } else {
               // Create initial profile
               const fallbackName = currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Guest Friend')
@@ -107,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               try {
                 await setDoc(userDocRef, initialProfile)
                 setProfile(initialProfile)
+                localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(initialProfile))
               } catch (err) {
                 console.warn('Initial profile creation note:', err)
               }
@@ -119,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         )
       } else {
-        setProfile(null)
+        // In guest or local mode, keep stored profile
         setLoading(false)
       }
     })
@@ -154,6 +185,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: friendlyError(err) }
         }
       },
+      signUp: async (email, password, displayName) => {
+        try {
+          const cred = await createUserWithEmailAndPassword(auth, email, password)
+          const fallbackName = (displayName && displayName.trim()) || email.split('@')[0]
+          const newProfileData: UserProfile = {
+            id: cred.user?.uid || 'user-' + Date.now(),
+            displayName: fallbackName,
+            email: email,
+            location: 'New York, NY',
+            bio: 'Connecting, exploring neighborhoods, and making real-world memories with new friends on Tiramisu.',
+            initials: fallbackName.slice(0, 2).toUpperCase(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }
+          setProfile(newProfileData)
+          localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(newProfileData))
+
+          if (cred.user) {
+            const userDocRef = doc(db, 'users', cred.user.uid)
+            await setDoc(userDocRef, newProfileData, { merge: true })
+          }
+          return {}
+        } catch (err) {
+          return { error: friendlyError(err) }
+        }
+      },
       signInWithGoogle: async () => {
         try {
           const provider = new GoogleAuthProvider()
@@ -180,6 +237,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
       updateProfile: async (updates: Partial<UserProfile>) => {
+        setProfile((prev) => {
+          const next = { ...prev, ...updates, updatedAt: new Date().toISOString() }
+          localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(next))
+          return next
+        })
         if (!auth.currentUser) return
         const path = `users/${auth.currentUser.uid}`
         try {
