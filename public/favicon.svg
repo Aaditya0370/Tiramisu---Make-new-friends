@@ -1,1 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#0b1020"/><path d="M15 18h34L37.5 46h-11L15 18Z" fill="#c8ff5a"/><circle cx="48" cy="15" r="5" fill="#9b7cff"/><path d="M48 7v16M40 15h16" stroke="#9b7cff" stroke-width="2" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- White Background -->
+  <rect width="512" height="512" fill="#FFFFFF"/>
+
+  <!-- Minimalist Tiramisu Icon -->
+  <g transform="translate(0, 20)">
+    <!-- Bottom Layer (Ladyfingers/Cake) -->
+    <path d="M136 340 H376 V380 H136 Z" fill="#C68B59" rx="8" />
+
+    <!-- Middle Mascarpone Cream Layer -->
+    <path d="M136 290 H376 V330 H136 Z" fill="#FFF5E4" rx="4" />
+
+    <!-- Top Layer (Ladyfingers/Espresso Cake) -->
+    <path d="M136 240 H376 V280 H136 Z" fill="#A0522D" rx="8" />
+
+    <!-- Top Cream Layer -->
+    <path d="M136 190 H376 V230 H136 Z" fill="#FFF5E4" rx="4" />
+
+    <!-- Cocoa Powder Dusting (Minimalist dots/dollops on top) -->
+    <g fill="#5C3A21">
+      <circle cx="160" cy="175" r="14" />
+      <circle cx="208" cy="175" r="14" />
+      <circle cx="256" cy="175" r="14" />
+      <circle cx="304" cy="175" r="14" />
+      <circle cx="352" cy="175" r="14" />
+    </g>
+
+    <!-- Decorative Mint Leaf (Minimalist accent) -->
+    <path d="M340 145 C350 120, 380 120, 380 145 C380 170, 350 160, 340 145 Z" fill="#4E7055" />
+    <path d="M340 145 C325 130, 325 100, 340 100 C355 100, 350 130, 340 145 Z" fill="#6A8E73" />
+  </g>
+</svg>
