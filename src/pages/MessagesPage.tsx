@@ -32,7 +32,6 @@ import {
 } from 'lucide-react'
 import { demoConversations, demoProfiles, type DemoProfile } from '../data/demo'
 import { formatInitials } from '../lib/utils'
-import '../styles/messages-copilot.css'
 
 type TabType = 'all' | 'unread' | 'groups'
 
@@ -514,23 +513,7 @@ export function MessagesPage() {
 
   return (
     <div className="dm-container">
-      {/* Quiet top status bar */}
-      <div className="dm-notice-bar">
-        <div className="dm-notice-bar-left">
-          <span className="dm-notice-dot" />
-          <span className="dm-notice-pill">Direct Messages</span>
-          <span>· Realtime client storage active · Supabase ready</span>
-        </div>
-        <button
-          className="dm-notice-link"
-          onClick={() => setShowVoiceModal(true)}
-        >
-          <Volume2 size={13} style={{ display: 'inline', marginRight: 4 }} />
-          Voice note preview
-        </button>
-      </div>
-
-      {/* Main Workstation */}
+      {/* Main Workstation: Full screen edge-to-edge layout */}
       <div
         className={`dm-workstation ${showDetails ? 'with-details' : ''} ${
           mobileChatOpen ? 'mobile-chat-open' : ''
@@ -654,6 +637,22 @@ export function MessagesPage() {
                 )
               })
             )}
+          </div>
+
+          {/* Sidebar Footer with subtle status & voice trigger */}
+          <div className="dm-sidebar-footer">
+            <div className="dm-sidebar-status">
+              <span className="dm-notice-dot" />
+              <span>Realtime active</span>
+            </div>
+            <button
+              className="dm-voice-studio-trigger"
+              onClick={() => setShowVoiceModal(true)}
+              title="Voice note studio"
+            >
+              <Volume2 size={13} />
+              <span>Voice</span>
+            </button>
           </div>
         </aside>
 

@@ -4,6 +4,41 @@
    Designed with intentional 4px/8px math, sharp hierarchy, and zero AI slop.
    ========================================================================== */
 
+/* Fullscreen shell integration: expand to 100% viewport width & height */
+.app-frame.app-frame-messages {
+  background: #ffffff !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+.app-main.app-main-fullscreen {
+  margin-left: 232px !important;
+  padding: 0 !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  width: calc(100vw - 232px) !important;
+  max-width: none !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+}
+
+@media (max-width: 860px) {
+  .app-main.app-main-fullscreen {
+    margin-left: 82px !important;
+    width: calc(100vw - 82px) !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .app-main.app-main-fullscreen {
+    margin-left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    padding-bottom: 64px !important;
+  }
+}
+
 .dm-container {
   --dm-bg-page: #f8fafc;
   --dm-bg-surface: #ffffff;
@@ -45,68 +80,27 @@
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   width: 100%;
-  margin: 0 auto;
-}
-
-/* Page top bar / demo status */
-.dm-notice-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 14px;
-  margin-bottom: 12px;
-  background: #ffffff;
-  border: 1px solid var(--dm-border);
-  border-radius: var(--dm-radius-md);
-  font-size: 12px;
-  color: var(--dm-text-secondary);
-}
-
-.dm-notice-bar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dm-notice-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #10b981;
-}
-
-.dm-notice-pill {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--dm-text-primary);
-}
-
-.dm-notice-link {
-  font-size: 12px;
-  color: var(--dm-accent);
-  background: transparent;
+  height: 100%;
+  margin: 0;
   padding: 0;
-  font-weight: 600;
-  cursor: pointer;
+  display: flex;
+  flex-direction: column;
 }
 
-.dm-notice-link:hover {
-  text-decoration: underline;
-}
-
-/* Main messaging workstation layout */
+/* Main messaging workstation layout: true full-bleed edge-to-edge app screen */
 .dm-workstation {
+  flex: 1;
   display: grid;
   grid-template-columns: 310px minmax(0, 1fr);
-  height: calc(100vh - 150px);
-  min-height: 640px;
-  max-height: 880px;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
   background: var(--dm-bg-surface);
-  border: 1px solid var(--dm-border);
-  border-radius: var(--dm-radius-lg);
+  border: none;
+  border-left: 1px solid var(--dm-border);
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: var(--dm-shadow-md);
+  box-shadow: none;
   transition: grid-template-columns 180ms ease;
 }
 
@@ -1516,6 +1510,44 @@
   to { height: 36px; }
 }
 
+/* Sidebar Footer */
+.dm-sidebar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid var(--dm-border-subtle);
+  background: #fafafc;
+  font-size: 11px;
+  color: var(--dm-text-muted);
+  flex-shrink: 0;
+}
+
+.dm-sidebar-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dm-voice-studio-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--dm-radius-sm);
+  color: var(--dm-accent);
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.dm-voice-studio-trigger:hover {
+  background: var(--dm-accent-soft);
+}
+
 /* --------------------------------------------------------------------------
    RESPONSIVE UX
    -------------------------------------------------------------------------- */
@@ -1537,7 +1569,7 @@
 @media (max-width: 768px) {
   .dm-workstation {
     grid-template-columns: 1fr;
-    height: calc(100vh - 120px);
+    height: 100%;
   }
 
   .dm-sidebar {
@@ -1574,3 +1606,4 @@
     transition: none !important;
   }
 }
+
