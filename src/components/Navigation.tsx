@@ -1,11 +1,11 @@
-import { Compass, Gamepad2, MessageCircle, UserRound } from 'lucide-react'
+import { Compass, Gamepad2, Sparkles, UserRound } from 'lucide-react'
 import { BrandMark, Avatar } from './Brand'
 import { cn, navigateTo } from '../lib/utils'
 
 type NavItem = { path: string; label: string; icon: typeof Compass; badge?: string }
 
 const items: NavItem[] = [
-  { path: '/messages', label: 'Messages', icon: MessageCircle, badge: '2' },
+  { path: '/messages', label: 'AI Chat', icon: Sparkles, badge: 'AI' },
   { path: '/joy', label: 'Joy Room', icon: Gamepad2 },
   { path: '/discover', label: 'Discover', icon: Compass },
   { path: '/profile', label: 'Profile', icon: UserRound },

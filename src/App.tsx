@@ -10,19 +10,15 @@ import { navigateTo } from './lib/utils'
 
 const publicPaths = ['/login', '/signup', '/forgot-password']
 const appPaths = ['/discover', '/messages', '/joy', '/profile']
-const readDemoMode = () => sessionStorage.getItem('tiramisu-demo-mode') === 'true' || sessionStorage.getItem('vibe-demo-mode') === 'true' || new URLSearchParams(window.location.search).get('demo') === '1'
+const readDemoMode = () =>
+  sessionStorage.getItem('tiramisu-demo-mode') === 'true' ||
+  sessionStorage.getItem('vibe-demo-mode') === 'true' ||
+  new URLSearchParams(window.location.search).get('demo') === '1'
 
 export default function App() {
   const [path, setPath] = useState(window.location.pathname || '/discover')
   const [demoMode, setDemoMode] = useState(readDemoMode)
-  const [quotaExceeded, setQuotaExceeded] = useState(false)
   const { user, loading } = useAuth()
-
-  useEffect(() => {
-    const onQuota = () => setQuotaExceeded(true)
-    window.addEventListener('gmp-quota-exceeded', onQuota)
-    return () => window.removeEventListener('gmp-quota-exceeded', onQuota)
-  }, [])
 
   useEffect(() => {
     const onPopState = () => {
@@ -35,41 +31,48 @@ export default function App() {
 
   useEffect(() => {
     if (loading) return
-    if (user && (publicPaths.includes(path) || path === '/')) navigateTo('/discover')
-    if (!user && !demoMode && !publicPaths.includes(path)) navigateTo('/login')
+    if (user && (publicPaths.includes(path) || path === '/')) {
+      navigateTo('/discover')
+    }
+    if (!user && !demoMode && !publicPaths.includes(path)) {
+      navigateTo('/login')
+    }
   }, [demoMode, loading, path, user])
 
-  if (loading) return <div className="loading-screen"><div className="loading-mark">T<span>✦</span></div><p>Finding your way in…</p></div>
-  if ((!user && !demoMode) || publicPaths.includes(path)) return <AuthPage mode={path === '/signup' ? 'signup' : path === '/forgot-password' ? 'forgot' : 'login'} />
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-mark">
+          T<span>✦</span>
+        </div>
+        <p>Finding your way in…</p>
+      </div>
+    )
+  }
+
+  if ((!user && !demoMode) || publicPaths.includes(path)) {
+    return (
+      <AuthPage
+        mode={path === '/signup' ? 'signup' : path === '/forgot-password' ? 'forgot' : 'login'}
+      />
+    )
+  }
 
   const activePath = appPaths.includes(path) ? path : '/discover'
-  const screen = activePath === '/messages' ? <MessagesPage /> : activePath === '/joy' ? <JoyPage /> : activePath === '/profile' ? <ProfilePage /> : <DiscoverPage />
+  const screen =
+    activePath === '/messages' ? (
+      <MessagesPage />
+    ) : activePath === '/joy' ? (
+      <JoyPage />
+    ) : activePath === '/profile' ? (
+      <ProfilePage />
+    ) : (
+      <DiscoverPage />
+    )
+
   return (
-    <>
-      {quotaExceeded && (
-        <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2 text-xs md:text-sm text-center sticky top-0 z-50 shadow-sm flex items-center justify-center gap-2">
-          <span>
-            Google Maps notice: Neighborhood Radar view is active for full friend discovery.{' '}
-            <a
-              href="https://developers.google.com/maps/ai/ai-studio?utm_campaign=gmp_mcp_codeassist_v1_aistudio#quota_exceeded_errors"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline font-semibold text-amber-950 hover:text-amber-800"
-            >
-              Maps developer details
-            </a>
-          </span>
-          <button
-            type="button"
-            onClick={() => setQuotaExceeded(false)}
-            className="text-amber-800 hover:text-amber-950 font-bold ml-2 text-base leading-none cursor-pointer"
-            title="Dismiss notification"
-          >
-            ×
-          </button>
-        </div>
-      )}
-      <AppShell path={activePath} demoMode={demoMode && !user}>{screen}</AppShell>
-    </>
+    <AppShell path={activePath} demoMode={demoMode && !user}>
+      {screen}
+    </AppShell>
   )
 }
