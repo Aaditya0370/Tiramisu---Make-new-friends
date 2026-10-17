@@ -1,0 +1,15 @@
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import 'leaflet/dist/leaflet.css'
+import './styles/global.css'
+import './styles/demo-overrides.css'
+import App from './App'
+import { AuthProvider } from './lib/AuthContext'
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </StrictMode>,
+)

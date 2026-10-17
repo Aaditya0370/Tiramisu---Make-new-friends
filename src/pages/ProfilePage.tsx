@@ -1,0 +1,23 @@
+import { useState } from 'react'
+import { Check, ChevronRight, Globe2, Lock, MapPin, Pencil, ShieldCheck, UserRound } from 'lucide-react'
+import { Avatar } from '../components/Brand'
+import { InterestPill, PageHeader, PrimaryButton, SavedNotice } from '../components/UI'
+import { useAuth } from '../lib/AuthContext'
+import { navigateTo } from '../lib/utils'
+
+export function ProfilePage() {
+  const { user, signOut } = useAuth()
+  const [name, setName] = useState(user?.user_metadata?.display_name ?? user?.email?.split('@')[0] ?? 'Your name')
+  const [bio, setBio] = useState('Collecting tiny joys and people who make ordinary plans feel worth showing up for.')
+  const [editing, setEditing] = useState(false)
+  const [visibility, setVisibility] = useState('Community')
+  const [locationSharing, setLocationSharing] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  function save() { setEditing(false); setSaved(true); window.setTimeout(() => setSaved(false), 2400) }
+  async function logout() { await signOut(); navigateTo('/login') }
+
+    return <div className="page-content profile-page"><PageHeader eyebrow="Your little corner of Tiramisu" title="Profile" description="A few details help the right people recognize the right energy." action={saved ? <SavedNotice>Saved locally</SavedNotice> : <button className="edit-toggle" onClick={() => setEditing((value) => !value)}><Pencil size={15} /> {editing ? 'Close editor' : 'Edit profile'}</button>} />
+    <div className="profile-layout"><section className="profile-hero-card"><div className="profile-cover"><div className="cover-spark cover-spark-one">✦</div><div className="cover-spark cover-spark-two">✦</div><div className="cover-orbit" /></div><div className="profile-hero-body"><div className="profile-avatar-wrap"><Avatar initials={name.split(' ').map((part: string) => part[0]).join('').slice(0, 2)} avatarClass="avatar-violet" size="lg" online /><button className="avatar-edit"><Pencil size={13} /></button></div><div className="profile-hero-copy"><span className="profile-eyebrow"><i /> Visible to your community</span>{editing ? <input className="profile-name-input" value={name} onChange={(event) => setName(event.target.value)} /> : <h2>{name}</h2>}<span>{user?.email ?? 'Read-only demo profile'}</span></div><div className="profile-hero-action"><span className="profile-spark-count"><span>✦</span> 12 sparks</span></div></div><div className="profile-form-body"><label className="field"><span>Short bio</span>{editing ? <textarea value={bio} onChange={(event) => setBio(event.target.value)} rows={3} /> : <p className="profile-readonly">{bio}</p>}</label><div className="field"><span>Your interests</span><div className="interest-list profile-interests"><InterestPill>Design</InterestPill><InterestPill>Good food</InterestPill><InterestPill>Indie music</InterestPill><InterestPill>Long walks</InterestPill>{editing && <button className="add-interest">+ Add interest</button>}</div></div>{editing && <PrimaryButton onClick={save}>Save profile</PrimaryButton>}</div></section><aside className="settings-stack"><section className="settings-card"><div className="settings-card-head"><div><span className="eyebrow"><ShieldCheck size={13} /> Boundaries, by you</span><h2>Privacy & visibility</h2></div></div><div className="setting-row"><span className="setting-icon"><Globe2 size={17} /></span><span><strong>Profile visibility</strong><small>Who can discover you in Tiramisu</small></span><select value={visibility} onChange={(event) => setVisibility(event.target.value)}><option>Community</option><option>Only people I message</option><option>Private</option></select></div><div className="setting-row"><span className="setting-icon"><MapPin size={17} /></span><span><strong>Approximate location</strong><small>Never shares your exact home location</small></span><button className={`toggle ${locationSharing ? 'is-on' : ''}`} onClick={() => setLocationSharing((value) => !value)} aria-label="Toggle approximate location"><span /></button></div><div className="privacy-note"><Lock size={14} /><span>Tiramisu only shows a broad area when you choose to share. You can change this any time.</span></div></section><section className="settings-card account-card"><div className="settings-card-head"><div><span className="eyebrow"><UserRound size={13} /> Account</span><h2>Keep your account yours</h2></div></div><button className="account-link"><span>{user ? 'Connected Supabase account' : 'Read-only demo session'}</span><Check size={16} /></button><button className="account-link"><span>Notification preferences</span><ChevronRight size={16} /></button><button className="logout-link" onClick={logout}>Log out of Tiramisu</button></section></aside></div>
+  </div>
+}
